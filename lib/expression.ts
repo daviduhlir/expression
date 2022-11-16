@@ -50,7 +50,7 @@ function evalSetByExpression(object: any, expresionParts: string[], value: any) 
   const expParts = [...expresionParts]
   const exp = expParts.shift()
   if (expParts.length) {
-    let currentValue = safe(() => new Function('object', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp}`)(object), undefined)
+    let currentValue = safe(() => new Function('object', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp || ''}`)(object), undefined)
     const nextShouldBeArray = !!(expParts[0] && expParts[0].match(/\[(([+]?)|(\d*))\]/))
 
     // complete missings
@@ -64,14 +64,14 @@ function evalSetByExpression(object: any, expresionParts: string[], value: any) 
 
     // sets value
     if (expParts[0] === '[]' && currentValue.length) {
-      currentValue.map(item => evalSetByExpression(item, expParts.slice(1), value))
+      currentValue.forEach((item, index) => evalSetByExpression(currentValue, [`[${index}]`, ...expParts.slice(1)], value))
     } else if (expParts[0] === '[+]' && currentValue.length) {
       evalSetByExpression(currentValue, [`[${currentValue.length}]`, ...expParts.slice(1)], value)
     } else {
       evalSetByExpression(currentValue, expParts, value)
     }
   } else {
-    safe(() => new Function('object', 'value', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp} = value`)(object, value), undefined)
+    safe(() => new Function('object', 'value', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp || ''} = value`)(object, value), undefined)
   }
 }
 

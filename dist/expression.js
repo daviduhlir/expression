@@ -33,7 +33,7 @@ function evalSetByExpression(object, expresionParts, value) {
     const expParts = [...expresionParts];
     const exp = expParts.shift();
     if (expParts.length) {
-        let currentValue = utils_1.safe(() => new Function('object', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp}`)(object), undefined);
+        let currentValue = utils_1.safe(() => new Function('object', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp || ''}`)(object), undefined);
         const nextShouldBeArray = !!(expParts[0] && expParts[0].match(/\[(([+]?)|(\d*))\]/));
         if (nextShouldBeArray && !Array.isArray(currentValue)) {
             currentValue = [];
@@ -44,7 +44,7 @@ function evalSetByExpression(object, expresionParts, value) {
             evalSetByExpression(object, [exp], currentValue);
         }
         if (expParts[0] === '[]' && currentValue.length) {
-            currentValue.map(item => evalSetByExpression(item, expParts.slice(1), value));
+            currentValue.forEach((item, index) => evalSetByExpression(currentValue, [`[${index}]`, ...expParts.slice(1)], value));
         }
         else if (expParts[0] === '[+]' && currentValue.length) {
             evalSetByExpression(currentValue, [`[${currentValue.length}]`, ...expParts.slice(1)], value);
@@ -54,7 +54,7 @@ function evalSetByExpression(object, expresionParts, value) {
         }
     }
     else {
-        utils_1.safe(() => new Function('object', 'value', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp} = value`)(object, value), undefined);
+        utils_1.safe(() => new Function('object', 'value', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp || ''} = value`)(object, value), undefined);
     }
 }
 function getByExpression(object, exp) {

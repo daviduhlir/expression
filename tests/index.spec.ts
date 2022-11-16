@@ -1,4 +1,4 @@
-import { assert, expect } from 'chai'
+import { expect } from 'chai'
 import { getByExpression, setByExpression } from '../dist'
 
 describe('Get data', function() {
@@ -72,6 +72,22 @@ describe('Set data', function() {
     setByExpression(object, '[].test', 'Hello world')
     expect(object[0].test).to.equal('Hello world')
     expect(object.length).to.equal(1)
+  })
+
+  it('Simple array', async function() {
+    const object = [1, 2]
+    setByExpression(object, '[]', 0)
+    expect(object[0]).to.equal(0)
+    expect(object[1]).to.equal(0)
+    expect(object.length).to.equal(2)
+  })
+
+  it('Simple array add', async function() {
+    const object = [1]
+    setByExpression(object, '[+]', 2)
+    expect(object[0]).to.equal(1)
+    expect(object[1]).to.equal(2)
+    expect(object.length).to.equal(2)
   })
 
 })
