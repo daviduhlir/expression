@@ -1,0 +1,32 @@
+{
+  "name": "@david.uhlir/expression",
+  "version": "1.0.0",
+  "description": "Set or gets value by expression",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rimraf ./dist && tsc",
+    "prettier-check": "prettier-check --config .prettierrc.json 'lib/**/*.ts'",
+    "prettier-format": "prettier --config .prettierrc.json 'lib/**/*.ts' --write",
+    "test": "npm run prettier-check && ts-mocha --timeout 10000 --type-check -p ./tsconfig.json tests/**/*.spec.ts",
+    "release": "./scripts/release.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daviduhlir/expression.git"
+  },
+  "keywords": [],
+  "author": "David Uhlíř",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^13.11.1",
+    "prettier": "^2.6.2",
+    "rimraf": "^2.6.2",
+    "typescript": "^3.8.3",
+    "chai": "^4.3.6",
+    "mocha": "^10.0.0",
+    "prettier-check": "^2.0.0",
+    "ts-mocha": "^10.0.0"
+  }
+}
