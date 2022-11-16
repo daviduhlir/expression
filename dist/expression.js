@@ -33,7 +33,7 @@ function evalSetByExpression(object, expresionParts, value) {
     const expParts = [...expresionParts];
     const exp = expParts.shift();
     if (expParts.length) {
-        let currentValue = utils_1.safe(() => new Function('object', `return object${exp}`)(object), undefined);
+        let currentValue = utils_1.safe(() => new Function('object', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp}`)(object), undefined);
         const nextShouldBeArray = !!(expParts[0] && expParts[0].match(/\[(([+]?)|(\d*))\]/));
         if (nextShouldBeArray && !Array.isArray(currentValue)) {
             currentValue = [];
@@ -54,7 +54,7 @@ function evalSetByExpression(object, expresionParts, value) {
         }
     }
     else {
-        utils_1.safe(() => new Function('object', 'value', `return object${exp === '[]' ? '[0]' : exp} = value`)(object, value), undefined);
+        utils_1.safe(() => new Function('object', 'value', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp} = value`)(object, value), undefined);
     }
 }
 function getByExpression(object, exp) {
@@ -64,7 +64,7 @@ function getByExpression(object, exp) {
 exports.getByExpression = getByExpression;
 function setByExpression(object, exp, value) {
     const pts = parseExpression(exp);
-    evalSetByExpression(object, pts, value);
+    evalSetByExpression(object, ['', ...pts], value);
 }
 exports.setByExpression = setByExpression;
 //# sourceMappingURL=expression.js.map

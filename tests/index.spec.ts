@@ -59,4 +59,19 @@ describe('Set data', function() {
     expect(object.something.length).to.equal(2)
   })
 
+  it('Array add on first place', async function() {
+    const object: {test: string}[] = [{test: 'test'}]
+    setByExpression(object, '[+].test', 'Hello world')
+    expect(object[0].test).to.equal('test')
+    expect(object[1].test).to.equal('Hello world')
+    expect(object.length).to.equal(2)
+  })
+
+  it('Array on first place', async function() {
+    const object: {test: string}[] = [{test: 'test'}]
+    setByExpression(object, '[].test', 'Hello world')
+    expect(object[0].test).to.equal('Hello world')
+    expect(object.length).to.equal(1)
+  })
+
 })
