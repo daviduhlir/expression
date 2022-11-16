@@ -4,7 +4,7 @@ exports.setByExpression = exports.getByExpression = void 0;
 const utils_1 = require("./utils");
 function parseExpression(exp) {
     const reg = /((\[\])|(\[\+\])|(\[\d*\])|(\[\"[^\[\]\"]*\"\])|(\[\'[^\[\]\']*\'\])|([^\[\]\\.\?"]*))/gm;
-    return (exp.match(reg) || []).filter(Boolean).map(i => i.match(/\[[^\[\]]*\]/) ? i : `["${i}"]`);
+    return (exp.match(reg) || []).filter(Boolean).map(i => (i.match(/\[[^\[\]]*\]/) ? i : `["${i}"]`));
 }
 function simplifyAndSplit(expParts) {
     return expParts.reduce((acc, part) => {
@@ -34,7 +34,7 @@ function evalSetByExpression(object, expresionParts, value) {
     const exp = expParts.shift();
     if (expParts.length) {
         let currentValue = utils_1.safe(() => new Function('object', `return object${exp}`)(object), undefined);
-        const nextShouldBeArray = !!expParts[0]?.match(/\[(([+]?)|(\d*))\]/);
+        const nextShouldBeArray = !!(expParts[0] && expParts[0].match(/\[(([+]?)|(\d*))\]/));
         if (nextShouldBeArray && !Array.isArray(currentValue)) {
             currentValue = [];
             evalSetByExpression(object, [exp], currentValue);
