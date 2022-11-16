@@ -51,7 +51,7 @@ function evalSetByExpression(object: any, expresionParts: string[], value: any) 
   const exp = expParts.shift()
   if (expParts.length) {
     let currentValue = safe(() => new Function('object', `return object${exp}`)(object), undefined)
-    const nextShouldBeArray = !!expParts[0]?.match(/\[(([+]?)|(\d*))\]/)
+    const nextShouldBeArray = !!(expParts[0] && expParts[0].match(/\[(([+]?)|(\d*))\]/))
 
     if (nextShouldBeArray && !Array.isArray(currentValue)) {
       currentValue = []

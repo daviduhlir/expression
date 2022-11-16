@@ -1,11 +1,4 @@
 /**
- * Replace all occurence in string
- */
-export function replaceAll(input: string, search: string, replacement: string): string {
-  return input.replace(new RegExp(search, 'g'), replacement)
-}
-
-/**
  * Safe function call
  */
 export function safe<T>(expression: () => T, defaultValue: any) {
