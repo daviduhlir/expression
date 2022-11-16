@@ -33,6 +33,7 @@ describe('Set data', function() {
     }
     setByExpression(object, 'something[0].test', 'Hello world')
     expect(object.something[0].test).to.equal('Hello world')
+    expect(object.something.length).to.equal(1)
   })
 
   it('Array', async function() {
@@ -42,8 +43,20 @@ describe('Set data', function() {
       ]
     }
     setByExpression(object, 'something[].test', 'Hello world')
+    expect(object.something[0].test).to.equal('Hello world')
+    expect(object.something.length).to.equal(1)
+  })
+
+  it('Array push', async function() {
+    const object = { something: [ {
+          test: null
+        }
+      ]
+    }
+    setByExpression(object, 'something[+].test', 'Hello world')
     expect(object.something[0].test).to.equal(null)
     expect(object.something[1].test).to.equal('Hello world')
+    expect(object.something.length).to.equal(2)
   })
 
 })

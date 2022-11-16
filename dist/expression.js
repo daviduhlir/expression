@@ -1,92 +1,70 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getFirstProperty = exports.setByExpression = exports.getByExpression = void 0;
+exports.setByExpression = exports.getByExpression = void 0;
 const utils_1 = require("./utils");
-function prepareExpression(exp) {
-    const cleanExp = utils_1.replaceAll(exp, '\\?\\.', '');
-    const reg = /(\[\'([^\[\]\"]+)\'\]|\[\"([^\[\]\"]+)\"\]|\[([^\.\[\]\"]+)\]|([^\.\[\]\"]+))/g;
-    const out = [];
-    let match = null;
-    while ((match = reg.exec(cleanExp)) !== null) {
-        for (let i = 5; i > 0; i--) {
-            if (match[i]) {
-                out.push(match[i]);
-                break;
-            }
-        }
-    }
-    return out.map(t => '["' + t + '"]').join('');
+function parseExpression(exp) {
+    const reg = /((\[\])|(\[\+\])|(\[\d*\])|(\[\"[^\[\]\"]*\"\])|(\[\'[^\[\]\']*\'\])|([^\[\]\\.\?"]*))/gm;
+    return (exp.match(reg) || []).filter(Boolean).map(i => i.match(/\[[^\[\]]*\]/) ? i : `["${i}"]`);
 }
-function prepareExpressionDependsOnData(object, exp) {
-    const arrayParts = exp.split('[]');
-    return arrayParts
-        .reduce((acc, part, i) => {
-        acc.push(part);
-        if (i < arrayParts.length - 1) {
-            const preparedCurrentExp = prepareExpression(acc.join('[]'));
-            const currentPartValue = getByExpression(object, preparedCurrentExp);
-            if (!Array.isArray(currentPartValue)) {
-                acc.push('[0]');
-            }
-            else {
-                acc.push(`[${currentPartValue.length}]`);
-            }
+function simplifyAndSplit(expParts) {
+    return expParts.reduce((acc, part) => {
+        if (part === '[]') {
+            acc.push('');
+        }
+        else {
+            acc[acc.length - 1] += part;
         }
         return acc;
-    }, [])
-        .join('');
+    }, ['']);
 }
-function getNumberFromAny(value) {
-    const val = parseInt(value, 10);
-    if (isNaN(val) || val.toString().length !== value.toString().length) {
-        return null;
-    }
-    return val;
-}
-function addMissings(object, exp) {
-    const parts = utils_1.replaceAll(exp, '"', '')
-        .split(/\[([^\[\]]*)\]/)
-        .filter(part => part.length);
-    let pointer = object;
-    for (let i = 0; i < parts.length - 1; i++) {
-        if (typeof pointer[parts[i]] === 'undefined' || pointer[parts[i]] === null) {
-            const numberIndexNext = getNumberFromAny(parts[i + 1]);
-            if (numberIndexNext === null) {
-                pointer[parts[i]] = {};
-            }
-            else {
-                pointer[parts[i]] = [];
-            }
+function evalGetByExpression(object, expresionParts) {
+    const expParts = [...expresionParts];
+    const exp = expParts.shift();
+    const value = utils_1.safe(() => new Function('object', `return object${exp}`)(object), undefined);
+    if (expParts.length) {
+        if (Array.isArray(value)) {
+            return value.map(item => evalGetByExpression(item, expParts));
         }
-        pointer = pointer[parts[i]];
+        return undefined;
     }
+    return value;
 }
-function getArrayResultByExpression(object, exps) {
-    if (exps.length === 1) {
-        return getByExpression(object, exps[0]);
-    }
-    const preparedExp = prepareExpression(exps[0]);
-    return getByExpression(object, preparedExp).map(value => getArrayResultByExpression(value, exps.slice(1)));
-}
-function getByExpression(object, exp) {
-    const arrayParts = exp.split('[]');
-    if (arrayParts.length === 1) {
-        const preparedExp = prepareExpression(exp);
-        return utils_1.safe(() => new Function('object', `return object${preparedExp}`)(object), undefined);
+function evalSetByExpression(object, expresionParts, value) {
+    const expParts = [...expresionParts];
+    const exp = expParts.shift();
+    if (expParts.length) {
+        let currentValue = utils_1.safe(() => new Function('object', `return object${exp}`)(object), undefined);
+        const nextShouldBeArray = !!expParts[0]?.match(/\[(([+]?)|(\d*))\]/);
+        if (nextShouldBeArray && !Array.isArray(currentValue)) {
+            currentValue = [];
+            evalSetByExpression(object, [exp], currentValue);
+        }
+        else if (!nextShouldBeArray && (typeof currentValue !== 'object' || currentValue === null || Array.isArray(currentValue))) {
+            currentValue = {};
+            evalSetByExpression(object, [exp], currentValue);
+        }
+        if (expParts[0] === '[]' && currentValue.length) {
+            currentValue.map(item => evalSetByExpression(item, expParts.slice(1), value));
+        }
+        else if (expParts[0] === '[+]' && currentValue.length) {
+            evalSetByExpression(currentValue, [`[${currentValue.length}]`, ...expParts.slice(1)], value);
+        }
+        else {
+            evalSetByExpression(currentValue, expParts, value);
+        }
     }
     else {
-        return utils_1.flatten(getArrayResultByExpression(object, arrayParts), exp.endsWith('[]') ? arrayParts.length - 1 : arrayParts.length - 2);
+        utils_1.safe(() => new Function('object', 'value', `return object${exp === '[]' ? '[0]' : exp} = value`)(object, value), undefined);
     }
+}
+function getByExpression(object, exp) {
+    const pts = simplifyAndSplit(parseExpression(exp));
+    return evalGetByExpression(object, pts);
 }
 exports.getByExpression = getByExpression;
 function setByExpression(object, exp, value) {
-    const preparedExp = prepareExpression(prepareExpressionDependsOnData(object, exp));
-    addMissings(object, preparedExp);
-    return utils_1.safe(() => new Function('object', 'value', `return object${preparedExp} = value`)(object, value), undefined);
+    const pts = parseExpression(exp);
+    evalSetByExpression(object, pts, value);
 }
 exports.setByExpression = setByExpression;
-function getFirstProperty(expression) {
-    return expression.split('.')[0].split('[')[0];
-}
-exports.getFirstProperty = getFirstProperty;
 //# sourceMappingURL=expression.js.map
