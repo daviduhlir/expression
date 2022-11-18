@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.setByExpression = exports.getByExpression = void 0;
 const utils_1 = require("./utils");
 function parseExpression(exp) {
-    const reg = /((\[\])|(\[\+\])|(\[\d*\])|(\[\"[^\[\]\"]*\"\])|(\[\'[^\[\]\']*\'\])|([^\[\]\\.\?"]*))/gm;
+    const reg = /((\[\])|(\[\-\])|(\[\+\])|(\[\-\d*\])|(\[\d*\])|(\[\"[^\[\]\"]*\"\])|(\[\'[^\[\]\']*\'\])|([^\[\]\\.\?"]*))/gm;
     return (exp.match(reg) || []).filter(Boolean).map(i => (i.match(/\[[^\[\]]*\]/) ? i : `["${i}"]`));
 }
 function simplifyAndSplit(expParts) {
@@ -34,7 +34,7 @@ function evalSetByExpression(object, expresionParts, value) {
     const exp = expParts.shift();
     if (expParts.length) {
         let currentValue = utils_1.safe(() => new Function('object', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp || ''}`)(object), undefined);
-        const nextShouldBeArray = !!(expParts[0] && expParts[0].match(/\[(([+]?)|(\d*))\]/));
+        const nextShouldBeArray = !!(expParts[0] && expParts[0].match(/\[(([\-]?)|([\+]?)|(\d*))\]/));
         if (nextShouldBeArray && !Array.isArray(currentValue)) {
             currentValue = [];
             evalSetByExpression(object, [exp], currentValue);
@@ -49,12 +49,16 @@ function evalSetByExpression(object, expresionParts, value) {
         else if (expParts[0] === '[+]' && currentValue.length) {
             evalSetByExpression(currentValue, [`[${currentValue.length}]`, ...expParts.slice(1)], value);
         }
+        else if (expParts[0] === '[-]' && currentValue.length) {
+            currentValue.unshift(undefined);
+            evalSetByExpression(currentValue, [`[0]`, ...expParts.slice(1)], value);
+        }
         else {
             evalSetByExpression(currentValue, expParts, value);
         }
     }
     else {
-        utils_1.safe(() => new Function('object', 'value', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp || ''} = value`)(object, value), undefined);
+        utils_1.safe(() => new Function('object', 'value', `return object${exp.match(/([[\-\+]])/) ? '[0]' : exp || ''} = value`)(object, value), undefined);
     }
 }
 function getByExpression(object, exp) {

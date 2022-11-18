@@ -6,7 +6,7 @@ import { safe } from './utils'
  */
 function parseExpression(exp: string) {
   // parse all parts of expression
-  const reg = /((\[\])|(\[\+\])|(\[\d*\])|(\[\"[^\[\]\"]*\"\])|(\[\'[^\[\]\']*\'\])|([^\[\]\\.\?"]*))/gm
+  const reg = /((\[\])|(\[\-\])|(\[\+\])|(\[\-\d*\])|(\[\d*\])|(\[\"[^\[\]\"]*\"\])|(\[\'[^\[\]\']*\'\])|([^\[\]\\.\?"]*))/gm
   return (exp.match(reg) || []).filter(Boolean).map(i => (i.match(/\[[^\[\]]*\]/) ? i : `["${i}"]`))
 }
 
@@ -51,7 +51,7 @@ function evalSetByExpression(object: any, expresionParts: string[], value: any) 
   const exp = expParts.shift()
   if (expParts.length) {
     let currentValue = safe(() => new Function('object', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp || ''}`)(object), undefined)
-    const nextShouldBeArray = !!(expParts[0] && expParts[0].match(/\[(([+]?)|(\d*))\]/))
+    const nextShouldBeArray = !!(expParts[0] && expParts[0].match(/\[(([\-]?)|([\+]?)|(\d*))\]/))
 
     // complete missings
     if (nextShouldBeArray && !Array.isArray(currentValue)) {
@@ -67,11 +67,14 @@ function evalSetByExpression(object: any, expresionParts: string[], value: any) 
       currentValue.forEach((item, index) => evalSetByExpression(currentValue, [`[${index}]`, ...expParts.slice(1)], value))
     } else if (expParts[0] === '[+]' && currentValue.length) {
       evalSetByExpression(currentValue, [`[${currentValue.length}]`, ...expParts.slice(1)], value)
+    } else if (expParts[0] === '[-]' && currentValue.length) {
+      currentValue.unshift(undefined)
+      evalSetByExpression(currentValue, [`[0]`, ...expParts.slice(1)], value)
     } else {
       evalSetByExpression(currentValue, expParts, value)
     }
   } else {
-    safe(() => new Function('object', 'value', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp || ''} = value`)(object, value), undefined)
+    safe(() => new Function('object', 'value', `return object${exp.match(/([[\-\+]])/) ? '[0]' : exp || ''} = value`)(object, value), undefined)
   }
 }
 

@@ -12,7 +12,7 @@ describe('Get data', function() {
     expect(result).to.equal('Hello world')
   })
 
-  it('Array', async function() {
+  it('Array #1', async function() {
     const object = { something: [ {
           test: 'Hello world'
         }
@@ -20,6 +20,35 @@ describe('Get data', function() {
     }
     const result = getByExpression(object, 'something[].test')
     expect(result[0]).to.equal('Hello world')
+    expect(result.length).to.equal(1)
+  })
+
+  it('Array #2', async function() {
+    const object = {
+      nested: {
+        property: [{
+          something: [
+            {
+              test: [
+                'A: Hello world 1',
+                'A: Hello world 2',
+              ]
+            },
+            {
+              test: [
+                'B: Hello world 1',
+                'B: Hello world 2',
+              ]
+            }
+          ]
+        }]
+      }
+    }
+    const result = getByExpression(object, 'nested.property[].something[].test[]')
+    expect(result[0][0].length).to.equal(2)
+    expect(result[0][1].length).to.equal(2)
+    expect(result[0][0]).to.have.ordered.members(['A: Hello world 1', 'A: Hello world 2'])
+    expect(result[0][1]).to.have.ordered.members(['B: Hello world 1', 'B: Hello world 2'])
   })
 
 })
