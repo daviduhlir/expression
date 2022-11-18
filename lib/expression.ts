@@ -11,36 +11,32 @@ function parseExpression(exp: string) {
 }
 
 /**
- * This will concat parts again, until [] will be found
- */
-function simplifyAndSplit(expParts: string[]) {
-  return expParts.reduce(
-    (acc, part) => {
-      if (part === '[]') {
-        acc.push('')
-      } else {
-        acc[acc.length - 1] += part
-      }
-      return acc
-    },
-    [''],
-  )
-}
-
-/**
  * Execute get by expresion
  */
 function evalGetByExpression(object: any, expresionParts: string[]) {
   const expParts = [...expresionParts]
   const exp = expParts.shift()
-  const value = safe(() => new Function('object', `return object${exp}`)(object), undefined)
+  const currentValue = safe(() => new Function('object', `return object${exp}`)(object), undefined)
+
   if (expParts.length) {
-    if (Array.isArray(value)) {
-      return value.map(item => evalGetByExpression(item, expParts))
+    let matchResult
+    if (expParts[0] === '[]' && Array.isArray(currentValue)) {
+      // for each
+      return currentValue.map((item, index) => evalGetByExpression(currentValue, [`[${index}]`, ...expParts.slice(1)]))
+    } else if (
+      !!(matchResult = expParts[0].match(/(\[(\-\d*)\])/)) &&
+      matchResult.length >= 3 &&
+      !isNaN(matchResult[2]) &&
+      Array.isArray(currentValue)
+    ) {
+      // for negative index
+      return evalGetByExpression(currentValue, [`[${currentValue.length + parseInt(matchResult[2], 10)}]`, ...expParts.slice(1)])
     }
-    return undefined
+    // stndart
+    return evalGetByExpression(currentValue, expParts)
   }
-  return value
+
+  return currentValue
 }
 
 /**
@@ -82,7 +78,7 @@ function evalSetByExpression(object: any, expresionParts: string[], value: any) 
  * Get value from object by expression (name seperated by "." or [])
  */
 export function getByExpression(object: any, exp: string) {
-  const pts = simplifyAndSplit(parseExpression(exp))
+  const pts = parseExpression(exp)
   return evalGetByExpression(object, pts)
 }
 

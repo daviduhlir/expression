@@ -6,28 +6,24 @@ function parseExpression(exp) {
     const reg = /((\[\])|(\[\-\])|(\[\+\])|(\[\-\d*\])|(\[\d*\])|(\[\"[^\[\]\"]*\"\])|(\[\'[^\[\]\']*\'\])|([^\[\]\\.\?"]*))/gm;
     return (exp.match(reg) || []).filter(Boolean).map(i => (i.match(/\[[^\[\]]*\]/) ? i : `["${i}"]`));
 }
-function simplifyAndSplit(expParts) {
-    return expParts.reduce((acc, part) => {
-        if (part === '[]') {
-            acc.push('');
-        }
-        else {
-            acc[acc.length - 1] += part;
-        }
-        return acc;
-    }, ['']);
-}
 function evalGetByExpression(object, expresionParts) {
     const expParts = [...expresionParts];
     const exp = expParts.shift();
-    const value = utils_1.safe(() => new Function('object', `return object${exp}`)(object), undefined);
+    const currentValue = utils_1.safe(() => new Function('object', `return object${exp}`)(object), undefined);
     if (expParts.length) {
-        if (Array.isArray(value)) {
-            return value.map(item => evalGetByExpression(item, expParts));
+        let matchResult;
+        if (expParts[0] === '[]' && Array.isArray(currentValue)) {
+            return currentValue.map((item, index) => evalGetByExpression(currentValue, [`[${index}]`, ...expParts.slice(1)]));
         }
-        return undefined;
+        else if (!!(matchResult = expParts[0].match(/(\[(\-\d*)\])/)) &&
+            matchResult.length >= 3 &&
+            !isNaN(matchResult[2]) &&
+            Array.isArray(currentValue)) {
+            return evalGetByExpression(currentValue, [`[${currentValue.length + parseInt(matchResult[2], 10)}]`, ...expParts.slice(1)]);
+        }
+        return evalGetByExpression(currentValue, expParts);
     }
-    return value;
+    return currentValue;
 }
 function evalSetByExpression(object, expresionParts, value) {
     const expParts = [...expresionParts];
@@ -62,7 +58,7 @@ function evalSetByExpression(object, expresionParts, value) {
     }
 }
 function getByExpression(object, exp) {
-    const pts = simplifyAndSplit(parseExpression(exp));
+    const pts = parseExpression(exp);
     return evalGetByExpression(object, pts);
 }
 exports.getByExpression = getByExpression;

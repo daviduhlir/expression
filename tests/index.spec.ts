@@ -53,6 +53,24 @@ describe('Get data', function() {
 
 })
 
+it('Array #3', async function() {
+  const object = { something:
+    [
+      {
+        test: 'Hello world 1'
+      },
+      {
+        test: 'Hello world 2'
+      },
+      {
+        test: 'Hello world 3'
+      }
+    ]
+  }
+  const result = getByExpression(object, 'something[-1].test')
+  expect(result).to.equal('Hello world 3')
+})
+
 describe('Set data', function() {
   it('Basic', async function() {
     const object = { something: [ {
