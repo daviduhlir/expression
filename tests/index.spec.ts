@@ -51,24 +51,23 @@ describe('Get data', function() {
     expect(result[0][1]).to.have.ordered.members(['B: Hello world 1', 'B: Hello world 2'])
   })
 
-})
-
-it('Array #3', async function() {
-  const object = { something:
-    [
-      {
-        test: 'Hello world 1'
-      },
-      {
-        test: 'Hello world 2'
-      },
-      {
-        test: 'Hello world 3'
-      }
-    ]
-  }
-  const result = getByExpression(object, 'something[-1].test')
-  expect(result).to.equal('Hello world 3')
+  it('Array #3', async function() {
+    const object = { something:
+      [
+        {
+          test: 'Hello world 1'
+        },
+        {
+          test: 'Hello world 2'
+        },
+        {
+          test: 'Hello world 3'
+        }
+      ]
+    }
+    const result = getByExpression(object, 'something[-1].test')
+    expect(result).to.equal('Hello world 3')
+  })
 })
 
 describe('Set data', function() {

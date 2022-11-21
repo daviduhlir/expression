@@ -31,21 +31,22 @@ function evalSetByExpression(object, expresionParts, value) {
     if (expParts.length) {
         let currentValue = utils_1.safe(() => new Function('object', `return object${exp === '[]' || exp === '[+]' ? '[0]' : exp || ''}`)(object), undefined);
         const nextShouldBeArray = !!(expParts[0] && expParts[0].match(/\[(([\-]?)|([\+]?)|(\d*))\]/));
-        if (nextShouldBeArray && !Array.isArray(currentValue)) {
+        const isArray = Array.isArray(currentValue);
+        if (nextShouldBeArray && !isArray) {
             currentValue = [];
             evalSetByExpression(object, [exp], currentValue);
         }
-        else if (!nextShouldBeArray && (typeof currentValue !== 'object' || currentValue === null || Array.isArray(currentValue))) {
+        else if (!nextShouldBeArray && (typeof currentValue !== 'object' || currentValue === null || isArray)) {
             currentValue = {};
             evalSetByExpression(object, [exp], currentValue);
         }
-        if (expParts[0] === '[]' && currentValue.length) {
+        if (expParts[0] === '[]' && currentValue.length && isArray) {
             currentValue.forEach((item, index) => evalSetByExpression(currentValue, [`[${index}]`, ...expParts.slice(1)], value));
         }
-        else if (expParts[0] === '[+]' && currentValue.length) {
+        else if (expParts[0] === '[+]' && currentValue.length && isArray) {
             evalSetByExpression(currentValue, [`[${currentValue.length}]`, ...expParts.slice(1)], value);
         }
-        else if (expParts[0] === '[-]' && currentValue.length) {
+        else if (expParts[0] === '[-]' && currentValue.length && isArray) {
             currentValue.unshift(undefined);
             evalSetByExpression(currentValue, [`[0]`, ...expParts.slice(1)], value);
         }
@@ -59,7 +60,7 @@ function evalSetByExpression(object, expresionParts, value) {
 }
 function getByExpression(object, exp) {
     const pts = parseExpression(exp);
-    return evalGetByExpression(object, pts);
+    return utils_1.safe(() => evalGetByExpression(object, pts), undefined);
 }
 exports.getByExpression = getByExpression;
 function setByExpression(object, exp, value) {
