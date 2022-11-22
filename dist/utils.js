@@ -1,10 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.flatten = exports.safe = exports.replaceAll = void 0;
-function replaceAll(input, search, replacement) {
-    return input.replace(new RegExp(search, 'g'), replacement);
-}
-exports.replaceAll = replaceAll;
+exports.flatten = exports.safe = void 0;
 function safe(expression, defaultValue) {
     try {
         const value = expression();

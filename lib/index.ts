@@ -1,1 +1,1 @@
-export { getByExpression, setByExpression, getFirstProperty } from './expression'
+export { getByExpression, setByExpression } from './expression'
