@@ -136,4 +136,10 @@ describe('Set data', function() {
     expect(object.length).to.equal(2)
   })
 
+  it('Array add missings', async function() {
+    const object = {}
+    setByExpression(object, 'nested.property[0].something[0].test[]', 'Hello world')
+    expect((object as any).nested.property[0].something[0].test[0]).to.equal("Hello world")
+  })
+
 })
