@@ -1,6 +1,6 @@
 {
   "name": "@david.uhlir/expression",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Set or gets value by expression",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
